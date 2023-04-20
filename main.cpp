@@ -2,6 +2,7 @@
 
 #include "mbed.h"
 #include "arm_book_lib.h"
+#include "string.h"
 
 //=====[Defines]===============================================================
 
@@ -124,6 +125,7 @@ typedef struct estados{
 }estados_t;
 
 estados_t estados;
+static bool cambios =true;
 
 //=====[Main function, the program entry point after power on or reset]========
 
@@ -146,9 +148,22 @@ int main()
 
 void mensajes_de_estado(){
 
-    static bool cambios =true;
-    if(cambios ==true)
-    printf("El estado del teclado es: %i",estados.estado_teclado    ==)
+   
+
+/*
+typedef enum {
+    MATRIX_KEYPAD_SCANNING,
+    MATRIX_KEYPAD_DEBOUNCE,
+    MATRIX_KEYPAD_KEY_HOLD_PRESSED
+} matrixKeypadState_t;
+*/
+
+       if(estados.estado_teclado==MATRIX_KEYPAD_SCANNING)
+         puts("SCANNING");
+        if(estados.estado_teclado==MATRIX_KEYPAD_DEBOUNCE)
+            puts("DEBOUNCE");
+        if(estados.estado_teclado==MATRIX_KEYPAD_KEY_HOLD_PRESSED)
+            puts("PRESSED");
 
 }
 void inputsInit()
@@ -594,6 +609,7 @@ char matrixKeypadUpdate()
             matrixKeypadLastKeyPressed = keyDetected;       //Si estoy en modo scanning leo la tecla presionada, arranco a contar tiempo
             accumulatedDebounceMatrixKeypadTime = 0;        //de debounce y cambio el modo
             matrixKeypadState = MATRIX_KEYPAD_DEBOUNCE;
+            estados.estado_teclado=MATRIX_KEYPAD_DEBOUNCE;
         }
         break;
 
@@ -603,8 +619,10 @@ char matrixKeypadUpdate()
             keyDetected = matrixKeypadScan();
             if( keyDetected == matrixKeypadLastKeyPressed ) {       //si es la misma antes y despues del tiempo de debounce valido la tecla
                 matrixKeypadState = MATRIX_KEYPAD_KEY_HOLD_PRESSED;
+                estados.estado_teclado= MATRIX_KEYPAD_KEY_HOLD_PRESSED;
             } else {
                 matrixKeypadState = MATRIX_KEYPAD_SCANNING;     //si no es valida vuevlo a modo scanning
+                estados.estado_teclado=MATRIX_KEYPAD_SCANNING;
             }
         }
         accumulatedDebounceMatrixKeypadTime =
@@ -618,6 +636,7 @@ char matrixKeypadUpdate()
                 keyReleased = matrixKeypadLastKeyPressed;
             }
             matrixKeypadState = MATRIX_KEYPAD_SCANNING;
+            estados.estado_teclado=MATRIX_KEYPAD_SCANNING;
         }
         break;
 
