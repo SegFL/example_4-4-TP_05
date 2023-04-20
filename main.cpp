@@ -116,6 +116,15 @@ void matrixKeypadInit();
 char matrixKeypadScan();
 char matrixKeypadUpdate();
 
+
+void mensajes_de_estado();
+
+typedef struct estados{
+    matrixKeypadState_t estado_teclado=MATRIX_KEYPAD_SCANNING;
+}estados_t;
+
+estados_t estados;
+
 //=====[Main function, the program entry point after power on or reset]========
 
 int main()
@@ -126,6 +135,7 @@ int main()
         alarmActivationUpdate();
         alarmDeactivationUpdate();
         uartTask();
+        mensajes_de_estado();
         eventLogUpdate();
         delay(TIME_INCREMENT_MS);
     }
@@ -133,6 +143,14 @@ int main()
 
 //=====[Implementations of public functions]===================================
 
+
+void mensajes_de_estado(){
+
+    static bool cambios =true;
+    if(cambios ==true)
+    printf("El estado del teclado es: %i",estados.estado_teclado    ==)
+
+}
 void inputsInit()
 {
     lm35ReadingsArrayInit();
@@ -545,12 +563,15 @@ char matrixKeypadScan()
 
     for( row=0; row<KEYPAD_NUMBER_OF_ROWS; row++ ) {
 
-        for( i=0; i<KEYPAD_NUMBER_OF_ROWS; i++ ) {
+        for( i=0; i<KEYPAD_NUMBER_OF_ROWS; i++ ) {//pongo a 3.3v todas las filas
             keypadRowPins[i] = ON;
         }
 
-        keypadRowPins[row] = OFF;
+        keypadRowPins[row] = OFF;//pongo a tierra la primer fila
 
+
+        //leo cada col. Si leo 0v significa que esta presionado.  Que este en ON significa que no hay conexion entre col y fila
+        //por lo que esta a 3.3v(por el pullup)
         for( col=0; col<KEYPAD_NUMBER_OF_COLS; col++ ) {
             if( keypadColPins[col] == OFF ) {
                 return matrixKeypadIndexToCharArray[row*KEYPAD_NUMBER_OF_ROWS + col];
@@ -570,20 +591,20 @@ char matrixKeypadUpdate()
     case MATRIX_KEYPAD_SCANNING:
         keyDetected = matrixKeypadScan();
         if( keyDetected != '\0' ) {
-            matrixKeypadLastKeyPressed = keyDetected;
-            accumulatedDebounceMatrixKeypadTime = 0;
+            matrixKeypadLastKeyPressed = keyDetected;       //Si estoy en modo scanning leo la tecla presionada, arranco a contar tiempo
+            accumulatedDebounceMatrixKeypadTime = 0;        //de debounce y cambio el modo
             matrixKeypadState = MATRIX_KEYPAD_DEBOUNCE;
         }
         break;
 
     case MATRIX_KEYPAD_DEBOUNCE:
-        if( accumulatedDebounceMatrixKeypadTime >=
+        if( accumulatedDebounceMatrixKeypadTime >=      //si ya supere el tiempo de debounce leo la tecla otra vez
             DEBOUNCE_KEY_TIME_MS ) {
             keyDetected = matrixKeypadScan();
-            if( keyDetected == matrixKeypadLastKeyPressed ) {
+            if( keyDetected == matrixKeypadLastKeyPressed ) {       //si es la misma antes y despues del tiempo de debounce valido la tecla
                 matrixKeypadState = MATRIX_KEYPAD_KEY_HOLD_PRESSED;
             } else {
-                matrixKeypadState = MATRIX_KEYPAD_SCANNING;
+                matrixKeypadState = MATRIX_KEYPAD_SCANNING;     //si no es valida vuevlo a modo scanning
             }
         }
         accumulatedDebounceMatrixKeypadTime =
