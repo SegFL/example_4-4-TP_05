@@ -390,7 +390,8 @@ void uartTask()
             break;
             
         case 's':
-        case 'S':      
+        case 'S':     
+ 
 /*
 Cada vez que se presione S o s se debera volver a inicializar el rtc
 Si no se presiona la S no se inicializa el rtc y el tiempo se cuenta a partir 
@@ -399,6 +400,7 @@ Cuando se desconecta la alimentacion se reinicia el rtc, para evitar esto se deb
 conectrar una bateria adicional especifica para el rtc
 conectada al pin 31 del microcontrolador stm324297itbu cn31(impar) y gnd
 */
+
             struct tm rtcTime;
             int strIndex;
                     
