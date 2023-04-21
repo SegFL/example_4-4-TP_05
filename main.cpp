@@ -37,6 +37,7 @@ typedef struct systemEvent {
 DigitalIn alarmTestButton(BUTTON1);
 DigitalIn mq2(PE_12);
 
+
 DigitalOut alarmLed(LED1);
 DigitalOut incorrectCodeLed(LED3);
 DigitalOut systemBlockedLed(LED2);
@@ -122,10 +123,14 @@ void mensajes_de_estado();
 
 typedef struct estados{
     matrixKeypadState_t estado_teclado=MATRIX_KEYPAD_SCANNING;
+    char caracter='\0';
+    bool cambios =false;
+     int num_de_col=0;
+     int num_de_fila=0;
 }estados_t;
 
 estados_t estados;
-static bool cambios =true;
+
 
 //=====[Main function, the program entry point after power on or reset]========
 
@@ -157,7 +162,7 @@ typedef enum {
     MATRIX_KEYPAD_KEY_HOLD_PRESSED
 } matrixKeypadState_t;
 */
-
+    if(estados.cambios==true){
        if(estados.estado_teclado==MATRIX_KEYPAD_SCANNING)
          puts("SCANNING");
         if(estados.estado_teclado==MATRIX_KEYPAD_DEBOUNCE)
@@ -165,9 +170,18 @@ typedef enum {
         if(estados.estado_teclado==MATRIX_KEYPAD_KEY_HOLD_PRESSED)
             puts("PRESSED");
 
+
+        printf("Caracter:%c\n",estados.caracter);
+        printf("Col pressed:%i,%i\n",estados.num_de_col,estados.num_de_fila);
+
+         estados.cambios=false;
+    }
 }
 void inputsInit()
 {
+
+    mq2.mode(PullUp);
+
     lm35ReadingsArrayInit();
     alarmTestButton.mode(PullDown);
     sirenPin.mode(OpenDrain);
@@ -376,7 +390,15 @@ void uartTask()
             break;
             
         case 's':
-        case 'S':
+        case 'S':      
+/*
+Cada vez que se presione S o s se debera volver a inicializar el rtc
+Si no se presiona la S no se inicializa el rtc y el tiempo se cuenta a partir 
+de una fecha previamente establecida
+Cuando se desconecta la alimentacion se reinicia el rtc, para evitar esto se debe 
+conectrar una bateria adicional especifica para el rtc
+conectada al pin 31 del microcontrolador stm324297itbu cn31(impar) y gnd
+*/
             struct tm rtcTime;
             int strIndex;
                     
@@ -589,6 +611,8 @@ char matrixKeypadScan()
         //por lo que esta a 3.3v(por el pullup)
         for( col=0; col<KEYPAD_NUMBER_OF_COLS; col++ ) {
             if( keypadColPins[col] == OFF ) {
+                estados.num_de_col=col;
+                estados.num_de_fila=row;
                 return matrixKeypadIndexToCharArray[row*KEYPAD_NUMBER_OF_ROWS + col];
             }
         }
@@ -610,6 +634,7 @@ char matrixKeypadUpdate()
             accumulatedDebounceMatrixKeypadTime = 0;        //de debounce y cambio el modo
             matrixKeypadState = MATRIX_KEYPAD_DEBOUNCE;
             estados.estado_teclado=MATRIX_KEYPAD_DEBOUNCE;
+            estados.cambios=true;
         }
         break;
 
@@ -620,9 +645,11 @@ char matrixKeypadUpdate()
             if( keyDetected == matrixKeypadLastKeyPressed ) {       //si es la misma antes y despues del tiempo de debounce valido la tecla
                 matrixKeypadState = MATRIX_KEYPAD_KEY_HOLD_PRESSED;
                 estados.estado_teclado= MATRIX_KEYPAD_KEY_HOLD_PRESSED;
+                estados.cambios=true;
             } else {
                 matrixKeypadState = MATRIX_KEYPAD_SCANNING;     //si no es valida vuevlo a modo scanning
                 estados.estado_teclado=MATRIX_KEYPAD_SCANNING;
+                estados.cambios=true;
             }
         }
         accumulatedDebounceMatrixKeypadTime =
@@ -637,6 +664,7 @@ char matrixKeypadUpdate()
             }
             matrixKeypadState = MATRIX_KEYPAD_SCANNING;
             estados.estado_teclado=MATRIX_KEYPAD_SCANNING;
+            estados.cambios=true;
         }
         break;
 
@@ -644,5 +672,7 @@ char matrixKeypadUpdate()
         matrixKeypadInit();
         break;
     }
+    estados.caracter=keyReleased;
+    
     return keyReleased;
 }
