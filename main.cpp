@@ -640,7 +640,7 @@ char matrixKeypadUpdate()
             matrixKeypadState = MATRIX_KEYPAD_DEBOUNCE;
             //
             if(estados.estado_teclado !=MATRIX_KEYPAD_DEBOUNCE){
-                estados.estado_teclado=MATRIX_KEYPAD_DEBOUNCE;
+                estadsos.estado_teclado=MATRIX_KEYPAD_DEBOUNCE;
                 estados.cambios=true; // se agraga variable para saber los cambios
                 mensajes_de_estado();
             } 
