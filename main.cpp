@@ -127,6 +127,8 @@ typedef struct estados{
     bool cambios =false;
      int num_de_col=0;
      int num_de_fila=0;
+     int array_index=100;//Indice del arreglo que contiene los caracters del teclado matricial
+                        // Lo inicializo en 100 para saber si todavia no se presiono ninguna tecla(valor prohibido)
 }estados_t;
 
 estados_t estados;
@@ -142,7 +144,6 @@ int main()
         alarmActivationUpdate();
         alarmDeactivationUpdate();
         uartTask();
-        mensajes_de_estado();
         eventLogUpdate();
         delay(TIME_INCREMENT_MS);
     }
@@ -154,14 +155,6 @@ int main()
 void mensajes_de_estado(){
 
    
-
-/*
-typedef enum {
-    MATRIX_KEYPAD_SCANNING,
-    MATRIX_KEYPAD_DEBOUNCE,
-    MATRIX_KEYPAD_KEY_HOLD_PRESSED
-} matrixKeypadState_t;
-*/
     if(estados.cambios==true){
        if(estados.estado_teclado==MATRIX_KEYPAD_SCANNING)
          puts("SCANNING");
@@ -171,8 +164,9 @@ typedef enum {
             puts("PRESSED");
 
 
-        printf("Caracter:%c\n",estados.caracter);
-        printf("Col pressed:%i,%i\n",estados.num_de_col,estados.num_de_fila);
+        printf("Caracter: %c\n",estados.caracter);
+        printf("Col pressed: %i, %i\n",estados.num_de_col,estados.num_de_fila);
+        printf("Indice del teclado matricial: %i\n",estados.array_index  );
 
         estados.cambios=false;
     }
@@ -612,12 +606,17 @@ char matrixKeypadScan()
         //leo cada col. Si leo 0v significa que esta presionado.  Que este en ON significa que no hay conexion entre col y fila
         //por lo que esta a 3.3v(por el pullup)
         for( col=0; col<KEYPAD_NUMBER_OF_COLS; col++ ) {
-            if( keypadColPins[col] == OFF ) {
-                estados.num_de_col=col;
-                estados.num_de_fila=row;
-                estados.cambios = true; //si se presiona
+            if( keypadColPins[col] == OFF ) {    
+             //
+                 estados.num_de_col=col;
+                 estados.num_de_fila=row;
+                 estados.cambios=true; // se agraga variable para saber los cambios
+                 estados.array_index=row*KEYPAD_NUMBER_OF_ROWS + col;
+                 mensajes_de_estado();
+            } 
+            //
                 return matrixKeypadIndexToCharArray[row*KEYPAD_NUMBER_OF_ROWS + col];
-            }
+            
         }
     }
     return '\0';
@@ -636,8 +635,14 @@ char matrixKeypadUpdate()
             matrixKeypadLastKeyPressed = keyDetected;       //Si estoy en modo scanning leo la tecla presionada, arranco a contar tiempo
             accumulatedDebounceMatrixKeypadTime = 0;        //de debounce y cambio el modo
             matrixKeypadState = MATRIX_KEYPAD_DEBOUNCE;
-            estados.estado_teclado=MATRIX_KEYPAD_DEBOUNCE;
-            estados.cambios=true; // se agraga variable para saber los cambios
+            //
+            if(estados.estado_teclado !=MATRIX_KEYPAD_DEBOUNCE){
+                estados.estado_teclado=MATRIX_KEYPAD_DEBOUNCE;
+                estados.cambios=true; // se agraga variable para saber los cambios
+                mensajes_de_estado();
+            } 
+            //
+
         }
         break;
 
@@ -647,12 +652,22 @@ char matrixKeypadUpdate()
             keyDetected = matrixKeypadScan();
             if( keyDetected == matrixKeypadLastKeyPressed ) {       //si es la misma antes y despues del tiempo de debounce valido la tecla
                 matrixKeypadState = MATRIX_KEYPAD_KEY_HOLD_PRESSED;
-                estados.estado_teclado= MATRIX_KEYPAD_KEY_HOLD_PRESSED;
-                estados.cambios=true;
+            //
+            if(estados.estado_teclado !=MATRIX_KEYPAD_KEY_HOLD_PRESSED){
+                estados.estado_teclado=MATRIX_KEYPAD_KEY_HOLD_PRESSED;
+                estados.cambios=true; // se agraga variable para saber los cambios
+                mensajes_de_estado();
+            } 
+            //
             } else {
                 matrixKeypadState = MATRIX_KEYPAD_SCANNING;     //si no es valida vuevlo a modo scanning
+            //
+            if(estados.estado_teclado !=MATRIX_KEYPAD_SCANNING){
                 estados.estado_teclado=MATRIX_KEYPAD_SCANNING;
-                estados.cambios=true;
+                estados.cambios=true; // se agraga variable para saber los cambios
+                mensajes_de_estado();
+            } 
+            //
             }
         }
         accumulatedDebounceMatrixKeypadTime =
@@ -666,8 +681,13 @@ char matrixKeypadUpdate()
                 keyReleased = matrixKeypadLastKeyPressed;
             }
             matrixKeypadState = MATRIX_KEYPAD_SCANNING;
-            estados.estado_teclado=MATRIX_KEYPAD_SCANNING;
-            estados.cambios=true;
+            //
+            if(estados.estado_teclado !=MATRIX_KEYPAD_SCANNING){
+                estados.estado_teclado=MATRIX_KEYPAD_SCANNING;
+                estados.cambios=true; // se agraga variable para saber los cambios
+                mensajes_de_estado();
+            } 
+            //
         }
         break;
 
@@ -675,7 +695,13 @@ char matrixKeypadUpdate()
         matrixKeypadInit();
         break;
     }
-    estados.caracter=keyReleased;
+    //
+    if(keyReleased !='\0'){//si el caracter es nulo no me interesa por lo que no lo imprimo
+         estados.caracter=keyReleased;
+         estados.cambios=true; // se agraga variable para saber los cambios
+         mensajes_de_estado();
+    } 
+     //
     
     return keyReleased;
 }
