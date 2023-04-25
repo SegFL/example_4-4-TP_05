@@ -174,7 +174,7 @@ typedef enum {
         printf("Caracter:%c\n",estados.caracter);
         printf("Col pressed:%i,%i\n",estados.num_de_col,estados.num_de_fila);
 
-         estados.cambios=false;
+        estados.cambios=false;
     }
 }
 void inputsInit()
@@ -606,7 +606,7 @@ char matrixKeypadScan()
             keypadRowPins[i] = ON;
         }
 
-        keypadRowPins[row] = OFF;//pongo a tierra la primer fila
+        keypadRowPins[row] = OFF;//pongo a tierra la fila de valor row
 
 
         //leo cada col. Si leo 0v significa que esta presionado.  Que este en ON significa que no hay conexion entre col y fila
@@ -615,6 +615,7 @@ char matrixKeypadScan()
             if( keypadColPins[col] == OFF ) {
                 estados.num_de_col=col;
                 estados.num_de_fila=row;
+                estados.cambios = true; //si se presiona
                 return matrixKeypadIndexToCharArray[row*KEYPAD_NUMBER_OF_ROWS + col];
             }
         }
@@ -636,7 +637,7 @@ char matrixKeypadUpdate()
             accumulatedDebounceMatrixKeypadTime = 0;        //de debounce y cambio el modo
             matrixKeypadState = MATRIX_KEYPAD_DEBOUNCE;
             estados.estado_teclado=MATRIX_KEYPAD_DEBOUNCE;
-            estados.cambios=true;
+            estados.cambios=true; // se agraga variable para saber los cambios
         }
         break;
 
